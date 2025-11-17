@@ -1,21 +1,35 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { defineEmits, defineProps } from 'vue'
+import { APIservice } from '../services/APIservice'
 
 const emit = defineEmits(['submit-filters'])
+
+const apiService = new APIservice()
 
 const search = ref('')
 const minPrice = ref('')
 const maxPrice = ref('')
 const category = ref('')
 
-// тоже поки фіксовані, поки немає апішних
-const categories = [
-  { value: '', text: 'Усі категорії' },
-  { value: 'clothes', text: 'Clothes' },
-  { value: 'electronics', text: 'Electronics' },
-  { value: 'accessories', text: 'Accessories' },
-  { value: 'sport', text: 'Sport' },
-]
+
+const categories = ref<any[]>([{ value: '', text: 'All categories' }])
+
+async function loadCategories() {
+  try {
+    const apiCategories = await apiService.fetchCategories()
+    categories.value = [
+      { value: '', text: 'All categories' },
+      ...apiCategories.map((cat: any) => ({
+        value: cat.name,
+        text: cat.name
+      }))
+    ]
+  } catch (error) {
+    console.error('Failed to load categories:', error)
+  }
+}
+  
 
 function applyFilters() {
   emit('submit-filters', {
@@ -38,6 +52,7 @@ onMounted(() => {
   minPrice.value = props.initialMinPrice ?? ''
   maxPrice.value = props.initialMaxPrice ?? ''
   category.value = props.initialCategory ?? ''
+  loadCategories()
 })
 </script>
 

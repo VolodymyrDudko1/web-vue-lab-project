@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { useCartStore } from "./stores/cart"
+import Footer from './componets/Footer.vue'
 
 const cart = useCartStore()
 
@@ -21,6 +22,9 @@ const cartCount = computed(() => cart.count)
         <b-nav-item to="/products" class="me-3">
           Products
         </b-nav-item>
+        <b-nav-item to="/favourites" class="me-3">
+          Favourites
+        </b-nav-item>
 
         <b-nav-item to="/cart" class="position-relative">
 
@@ -40,6 +44,7 @@ const cartCount = computed(() => cart.count)
       </b-navbar-nav>
     </b-navbar>
     <router-view />
+    <Footer />
 
   </div>
 </template>

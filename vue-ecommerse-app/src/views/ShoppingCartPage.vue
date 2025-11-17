@@ -92,6 +92,7 @@ function decrease(id: number) {
     </div>
 
   </div>
+  
 </template>
 
 <style scoped>
