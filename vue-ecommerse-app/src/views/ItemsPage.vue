@@ -6,12 +6,17 @@ import ProductCard from "../componets/ProductCard.vue"
 import Pagination from "../componets/Pagination.vue"
 import { mockProducts } from "../mock/products"
 import {useCartStore} from "../stores/cart";
+import {useFavouritesStore} from "../stores/favourites";
+import { APIservice } from "../services/APIservice";
+import Footer from '../componets/Footer.vue'
 
+const apiService = new APIservice()
 
 const route = useRoute()
 const router = useRouter()
 
 const cart = useCartStore()
+const favourites = useFavouritesStore()
 const page = ref(Number(route.query.page ?? 1))
 const search = ref(route.query.search ?? '')
 const minPrice = ref(route.query.minPrice ?? '')
@@ -20,6 +25,7 @@ const category = ref(route.query.category ?? '')   // нове
 
 const products = ref<any[]>([])
 const totalPages = ref(1)
+const isLoading = ref(false)
 
 function applyFilters(filters: any) {
   router.push({
@@ -42,42 +48,52 @@ function setPage(newPage: number) {
   })
 }
 
-function loadProducts() {
-  let filtered = [...mockProducts]
+async function loadProducts() {
+  isLoading.value = true
+  try {
+    const allProducts = await apiService.fetchProducts(200, 0)
+    
+    let filtered = allProducts
 
-  if (search.value) {
-    filtered = filtered.filter(p =>
-        p.title.toLowerCase().includes(String(search.value).toLowerCase())
-    )
+    if (search.value) {
+      filtered = filtered.filter((p: any) =>
+          p.title.toLowerCase().includes(String(search.value).toLowerCase())
+      )
+    }
+
+    if (minPrice.value) {
+      filtered = filtered.filter((p: any) => p.price >= Number(minPrice.value))
+    }
+
+    if (maxPrice.value) {
+      filtered = filtered.filter((p: any) => p.price <= Number(maxPrice.value))
+    }
+
+    if (category.value) {
+      filtered = filtered.filter(
+          (p: any) => p.category?.name?.toLowerCase() === String(category.value).toLowerCase()
+      )
+    }
+
+    const perPage = 4
+    totalPages.value = Math.max(1, Math.ceil(filtered.length / perPage))
+
+    const start = (page.value - 1) * perPage
+    products.value = filtered.slice(start, start + perPage)
+  } catch (error) {
+    console.error('Failed to load products:', error)
+    products.value = []
+  } finally {
+    isLoading.value = false
   }
-
-  if (minPrice.value) {
-    filtered = filtered.filter(p => p.price >= Number(minPrice.value))
-  }
-
-  if (maxPrice.value) {
-    filtered = filtered.filter(p => p.price <= Number(maxPrice.value))
-  }
-
-  if (category.value) {
-    filtered = filtered.filter(p => p.category === category.value)
-  }
-
-  if (category.value) {
-    filtered = filtered.filter(
-        p => p.category?.toLowerCase() === String(category.value).toLowerCase()
-    )
-  }
-
-  const perPage = 4
-  totalPages.value = Math.max(1, Math.ceil(filtered.length / perPage))
-
-  const start = (page.value - 1) * perPage
-  products.value = filtered.slice(start, start + perPage)
 }
 
 function addToCart(product: any) {
   cart.addProduct(product)
+}
+
+function toggleProduct(product: any) {
+  favourites.toggleProduct(product)
 }
 
 watch(() => route.query, () => {
@@ -117,6 +133,7 @@ loadProducts()
         <ProductCard
             :product="product"
             @add-to-cart="addToCart"
+            @favorite="toggleProduct"
         />
       </b-col>
     </b-row>
@@ -130,6 +147,7 @@ loadProducts()
     </div>
 
   </div>
+  
 </template>
 
 <style scoped></style>

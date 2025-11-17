@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import { useFavouritesStore } from '../stores/favourites';
+const favourites = useFavouritesStore();
+
+
 defineProps<{ product: any }>()
+
+function isFavorite(productId: number) {
+  return favourites.isItemInFavourites(productId);
+}
 </script>
 
 <template>
@@ -10,7 +18,8 @@ defineProps<{ product: any }>()
       :img-src="product.images?.[0]"
   >
     <i
-        class="bi bi-heart favorite-icon"
+        class="bi favorite-icon"
+        :class="isFavorite(product.id) ? 'bi-heart-fill' : 'bi-heart'"
         @click="$emit('favorite', product)"
     ></i>
 
